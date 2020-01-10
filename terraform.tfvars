@@ -12,3 +12,4 @@ cidrs = {
 }
 
 localip = "166.58.58.34/32"
+domain_name = "andynosy.com"
