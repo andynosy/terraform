@@ -312,12 +312,12 @@ resource "aws_security_group" "wp_rds_sg" {
 
 # s3 endpoint 
 resource "aws_vpc_endpoint" "wp_private-s3_point" {
-  vpc_id = "${aws_vpc.wp_vpc.id}"
+  vpc_id       = "${aws_vpc.wp_vpc.id}"
   service_name = "com.amazonaws.${var.aws_region}.s3"
-  route_table_ids = ["${aws_route_table.wp_public_rt.id}","${aws_vpc.wp_vpc.main_route_table_id}"
+  route_table_ids = ["${aws_route_table.wp_public_rt.id}", "${aws_vpc.wp_vpc.main_route_table_id}"
   ]
 
-  policy =  <<POLICY
+  policy = <<POLICY
    {
 
     "Statement": [
@@ -335,7 +335,7 @@ POLICY
 
 ### ------ s3 code ------------------
 resource "random_id" "wp_code_bucket" {
- byte_length = 2 
+ byte_length = 2
 }
 
 resource "aws_s3_bucket" "code" {
@@ -346,4 +346,58 @@ resource "aws_s3_bucket" "code" {
    Name = "code bucket"
 }
 
+}
+
+
+#------------ RDS ---------------
+
+resource "aws_db_instance" "wp_db" {
+ allocated_storage = 10
+ engine = "mysql"
+ engine_version = "5.6.27"
+ instance_class = "${var.db_instance_class}"
+ name = "${var.dbname}"
+ username = "${var.dbuser}"
+ password = "${var.dbpassword}"
+ db_subnet_group_name = "${aws_db_subnet_group.wp_rds_subnetgroup.name}"
+ vpc_security_group_ids = ["${aws_security_group.wp_rds_sg.id}"]
+ skip_final_snapshot = true
+ 
+}
+
+# key pair 
+resource "aws_key_pair" "wp_auth" {
+ key_name = "${var.key_name}"
+ public_key = "${file(var.public_key_path)}"
+}
+
+# DEV server 
+resource "aws_instance" "wp_dev" {
+ instance_type = "{var.dev_instance_type}"
+ ami = "{var.dev_ami}"
+ 
+ tags = {
+   Name = "wp_dev"
+ }
+
+ key_name = "${aws_key_pair.wp_auth.id}"
+ vpc_security_group_ids = ["${aws_security_group.wp_dev_sg.id}"]
+ iam_instance_profile = "${aws_iam_instance_profile.s3_access_profile.id}"
+ subnet_id = "${aws_subnet.wp_public1_subnet.id}"
+ 
+ provisioner "local-exec" {
+   command = <<EOD
+cat <<EOF > aws_hosts
+[dev]
+${aws_instance.wp_dev.public_ip}
+[dev:vars]
+s3code=${aws_s3_bucket.code.bucket}
+domain=$${var.domain_name}
+EOF
+EOD
+}
+
+provisioner "local-exec" {
+  command = "aws ec2 wait instance-status-ok --instance-ids ${aws_instance.wp_dev.id} --profile superhero && ansible-playbook -i aws_hosts wordpress.yml "
+  }
 }

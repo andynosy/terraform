@@ -10,6 +10,14 @@ cidrs = {
   rds2     = "10.0.6.0/24"
   rds3     = "10.0.7.0/24"
 }
+localip           = "166.58.58.34/32"
+domain_name       = "andynosy.com"
+db_instance_class = "db.t2.micro"
+dbname            = "superhero"
+dbuser            = "superhero"
+dbpassword        = "superheropassword"
+dev_instance_type = "t2.micro"
+dev_ami = "ami-b73b63a0"
+public_key_path = "/home/andynosy/kryptonite.pub"
+key_name = "kryptonite"
 
-localip = "166.58.58.34/32"
-domain_name = "andynosy.com"
