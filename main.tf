@@ -17,8 +17,8 @@ resource "aws_iam_role_policy" "s3_acess_policy" {
 
   policy = <<EOF
 {
-  "version": "2020-01-05",
-  "statement": [
+  "Version": "2012-10-17",
+  "Statement": [
    {
        "Effect": "Allow",
        "Action": "s3:*",
@@ -37,12 +37,12 @@ resource "aws_iam_role" "s3_access_role" {
   name = "s3_access_role"
   assume_role_policy = <<EOF
 {
-  "Version": "2020-01-50",
-  "statement": [
+  "Version": "2012-10-17",
+  "Statement": [
     {
-      "Action": "sts:AssumerRole",
-      "Principle": { 
-         "service": "ec2.amazoneaws.com"
+      "Action": "sts:AssumeRole",
+      "Principal": { 
+         "Service": "ec2.amazonaws.com"
   },
       "Effect": "Allow",
       "Sid": ""
@@ -105,7 +105,7 @@ resource "aws_subnet" "wp_public1_subnet" {
   vpc_id                  = "${aws_vpc.wp_vpc.id}"
   cidr_block              = "${var.cidrs["public1"]}"
   map_public_ip_on_launch = true
-  availability_zone       = "{data.aws_availabilty_zone.available.name[0]}"
+  availability_zone       = "${data.aws_availability_zones.available.names[0]}"
   tags = {
     Name = "wp_public1"
   }
@@ -115,7 +115,7 @@ resource "aws_subnet" "wp_public2_subnet" {
   vpc_id                  = "${aws_vpc.wp_vpc.id}"
   cidr_block              = "${var.cidrs["public2"]}"
   map_public_ip_on_launch = true
-  availability_zone       = "{data.aws_availabilty_zone.available.name[1]}"
+  availability_zone       = "${data.aws_availability_zones.available.names[1]}"
   tags = {
     Name = "wp_public2"
   }
@@ -126,7 +126,7 @@ resource "aws_subnet" "wp_private1_subnet" {
   vpc_id                  = "${aws_vpc.wp_vpc.id}"
   cidr_block              = "${var.cidrs["private1"]}"
   map_public_ip_on_launch = false
-  availability_zone       = "{data.aws_availabilty_zone.available.name[0]}"
+  availability_zone       = "${data.aws_availability_zones.available.names[0]}"
   tags = {
     Name = "wp_private1"
   }
@@ -136,7 +136,7 @@ resource "aws_subnet" "wp_private2_subnet" {
   vpc_id                  = "${aws_vpc.wp_vpc.id}"
   cidr_block              = "${var.cidrs["private2"]}"
   map_public_ip_on_launch = false
-  availability_zone       = "{data.aws_availabilty_zone.available.name[1]}"
+  availability_zone       = "${data.aws_availability_zones.available.names[1]}"
   tags = {
     Name = "wp_private2"
   }
@@ -146,7 +146,7 @@ resource "aws_subnet" "wp_rds1_subnet" {
   vpc_id                  = "${aws_vpc.wp_vpc.id}"
   cidr_block              = "${var.cidrs["rds1"]}"
   map_public_ip_on_launch = false
-  availability_zone       = "{data.aws_availabilty_zone.available.name[0]}"
+  availability_zone       = "${data.aws_availability_zones.available.names[0]}"
   tags = {
     Name = "wp_rds1"
   }
@@ -157,7 +157,7 @@ resource "aws_subnet" "wp_rds2_subnet" {
   vpc_id                  = "${aws_vpc.wp_vpc.id}"
   cidr_block              = "${var.cidrs["rds2"]}"
   map_public_ip_on_launch = false
-  availability_zone       = "{data.aws_availabilty_zone.available.name[1]}"
+  availability_zone       = "${data.aws_availability_zones.available.names[1]}"
   tags = {
     Name = "wp_rds2"
   }
@@ -167,7 +167,7 @@ resource "aws_subnet" "wp_rds3_subnet" {
   vpc_id                  = "${aws_vpc.wp_vpc.id}"
   cidr_block              = "${var.cidrs["rds3"]}"
   map_public_ip_on_launch = false
-  availability_zone       = "{data.aws_availabilty_zone.available.name[2]}"
+  availability_zone       = "${data.aws_availability_zones.available.names[2]}"
   tags = {
     Name = "wp_rds3"
   }
@@ -193,7 +193,7 @@ resource "aws_route_table_association" "wp_public1_assoc" {
 }
 
 resource "aws_route_table_association" "wp_public2_assoc" {
-    subnet_id      = "#${aws_subnet.wp_public2_subnet.id}"
+    subnet_id      = "${aws_subnet.wp_public2_subnet.id}"
     route_table_id = "${aws_route_table.wp_public_rt.id}"
 }
 
@@ -319,16 +319,14 @@ resource "aws_vpc_endpoint" "wp_private-s3_point" {
 
   policy = <<POLICY
    {
-
     "Statement": [
        {
-        "Effect": "allow",
+        "Effect": "Allow",
         "Action": "*",
-        "Principle": "*",	
+        "Principal": "*",	
         "Resource": "*"
           }
                 ]
-
 }
 POLICY
 }
@@ -354,7 +352,7 @@ resource "aws_s3_bucket" "code" {
 resource "aws_db_instance" "wp_db" {
  allocated_storage = 10
  engine = "mysql"
- engine_version = "5.6.27"
+ engine_version = "5.7.22"
  instance_class = "${var.db_instance_class}"
  name = "${var.dbname}"
  username = "${var.dbuser}"
@@ -373,8 +371,8 @@ resource "aws_key_pair" "wp_auth" {
 
 # DEV server 
 resource "aws_instance" "wp_dev" {
- instance_type = "{var.dev_instance_type}"
- ami = "{var.dev_ami}"
+ instance_type = "${var.dev_instance_type}"
+ ami = "${var.dev_ami}"
  
  tags = {
    Name = "wp_dev"
@@ -408,8 +406,8 @@ provisioner "local-exec" {
 
 resource "aws_elb" "wp-elb" {
   name = "wp-elb"
-  subnets = ["{aws_subnet.wp_public1_subnet.id}",
-    "{aws_subnet.wp_public2_subnet.id}"
+  subnets = ["${aws_subnet.wp_public1_subnet.id}",
+    "${aws_subnet.wp_public2_subnet.id}"
   ]
   security_groups = ["${aws_security_group.wp_public_sg.id}"]
   listener {
@@ -487,10 +485,10 @@ resource "aws_autoscaling_group" "wp_asg" {
  max_size = "${var.asg_max}"
  min_size = "${var.asg_min}"
  health_check_grace_period = "${var.asg_grace}"
- health_check_type = "{var.asg_hct}"
+ health_check_type = "${var.asg_hct}"
  desired_capacity = "${var.asg_cap}"
  force_delete = true
- load_balancers = ["{aws_elb.wp_elb.id}"] 
+ load_balancers = ["${aws_elb.wp-elb.id}"] 
  vpc_zone_identifier = ["${aws_subnet.wp_private1_subnet.id}",
                        "${aws_subnet.wp_private2_subnet.id}"   
  ]
@@ -541,7 +539,9 @@ resource "aws_route53_record" "dev" {
 
 resource "aws_route53_zone" "secondary" {
  name = "${var.domain_name}.com"
+ vpc {
  vpc_id = "${aws_vpc.wp_vpc.id}"
+ }
 }
 
 #DB
