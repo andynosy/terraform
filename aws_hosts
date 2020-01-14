@@ -1,0 +1,5 @@
+[dev]
+34.230.13.213
+[dev:vars]
+s3code=andynosy.com-49508
+domain=andynosy.com

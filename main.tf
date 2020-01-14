@@ -222,7 +222,7 @@ resource "aws_security_group" "wp_dev_sg" {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["${var.localip}"]
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
  #HTTP
@@ -230,7 +230,7 @@ resource "aws_security_group" "wp_dev_sg" {
     from_port   = "80"
     to_port     = 80
     protocol    = "tcp"
-    cidr_blocks = ["${var.localip}"]
+    cidr_blocks = ["0.0.0.0/0"]
 }
   egress {
     to_port     = 0
@@ -390,13 +390,13 @@ cat <<EOF > aws_hosts
 ${aws_instance.wp_dev.public_ip}
 [dev:vars]
 s3code=${aws_s3_bucket.code.bucket}
-domain=$${var.domain_name}
+domain=${var.domain_name}
 EOF
 EOD
-}
+  }
 
-provisioner "local-exec" {
-  command = "aws ec2 wait instance-status-ok --instance-ids ${aws_instance.wp_dev.id} --profile superhero && ansible-playbook -i aws_hosts wordpress.yml "
+ provisioner "local-exec" {
+  command = "aws ec2 wait instance-status-ok --instance-ids ${aws_instance.wp_dev.id} --profile superhero && ansible-playbook -i aws_hosts wordpress.yml"
 }
 }
 
@@ -528,7 +528,7 @@ resource "aws_route53_record" "www" {
 }
 #DEV
 resource "aws_route53_record" "dev" {
- zone_id = "aws_route53_zone.primary.zone_id}"
+ zone_id = "${aws_route53_zone.primary.zone_id}"
  name = "dev.${var.domain_name}.com"
  type = "A"
  ttl = "300"
