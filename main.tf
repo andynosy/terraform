@@ -95,7 +95,7 @@ resource "aws_default_route_table" "wp_private_rt" {
   default_route_table_id = "${aws_vpc.wp_vpc.default_route_table_id}"
 
   tags = {
-     Name = "wp_puplic"
+     Name = "wp_private"
 }
 }
 
@@ -210,6 +210,24 @@ resource "aws_route_table_association" "wp_private2_assoc" {
 
 }
 
+resource "aws_route_table_association" "wp_rds1_assoc" {
+  subnet_id      = "${aws_subnet.wp_rds1_subnet.id}"
+  route_table_id = "${aws_default_route_table.wp_private_rt.id}"
+
+}
+
+resource "aws_route_table_association" "wp_rds2_assoc" {
+  subnet_id      = "${aws_subnet.wp_rds2_subnet.id}"
+  route_table_id = "${aws_default_route_table.wp_private_rt.id}"
+
+}
+
+resource "aws_route_table_association" "wp_rds3_assoc" {
+  subnet_id      = "${aws_subnet.wp_rds3_subnet.id}"
+  route_table_id = "${aws_default_route_table.wp_private_rt.id}"
+
+}
+
 # security groups
 
 resource "aws_security_group" "wp_dev_sg" {
@@ -275,7 +293,7 @@ resource "aws_security_group" "wp_private_sg" {
   ingress {
     from_port   = 0
     to_port     = 0
-    protocol    = "tcp"
+    protocol    = "-1"
     cidr_blocks = ["${var.vpc_cidr}"]
 }
    egress {
@@ -480,6 +498,7 @@ resource "aws_launch_configuration" "wp_lc" {
 }
 
 # ------- Auto Scalig Group ----------------
+
 resource "aws_autoscaling_group" "wp_asg" {
  name = "asg-${aws_launch_configuration.wp_lc.id}"
  max_size = "${var.asg_max}"
@@ -516,7 +535,7 @@ resource "aws_route53_zone" "primary" {
 # www
 resource "aws_route53_record" "www" {
  zone_id = "${aws_route53_zone.primary.zone_id}"
- name = "www.${var.domain_name}"
+ name = "www.${var.domain_name}.com"
  type = "A"
  
  alias {

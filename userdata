@@ -1,4 +1,4 @@
 #!/bin/bash
-/usr/bin/aws s3 sync s3://andynosy.com-49508 /var/www/html/
+/usr/bin/aws s3 sync s3://andynosy-61250 /var/www/html/
 /bin/touch /var/cron/root
-sudo /bin/echo '*/5 * * * * aws s3 sync s3://andynosy.com-49508 /var/www/html' >> /var/spool/cron/root
+sudo /bin/echo '*/5 * * * * aws s3 sync s3://andynosy-61250 /var/www/html' >> /var/spool/cron/root
